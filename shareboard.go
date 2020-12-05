@@ -67,6 +67,26 @@ func Posts(w http.ResponseWriter, r *http.Request) {
 	w.Write(res)
 }
 
+func CreatePost(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Content-Type") != "application/json" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	len := r.ContentLength
+	body := make([]byte, len)
+	r.Body.Read(body)
+	fmt.Fprintln(w, string(body))
+
+	var post Post
+	err := json.Unmarshal(body[:len], &post)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+    	return
+	}
+	fmt.Fprintln(w, post)
+}
+
 func Votes(w http.ResponseWriter, r *http.Request) {
 	var vote Vote
 	var votes []Vote
@@ -100,6 +120,7 @@ func main() {
 	}
 	http.HandleFunc("/vote", Votes)
 	http.HandleFunc("/post", Posts)
+	http.HandleFunc("/create", CreatePost)
 
 	server.ListenAndServe()
 }
