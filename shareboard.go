@@ -35,6 +35,11 @@ type Post struct {
 	Likes	int	`json:"likes"`
 }
 
+type NewPost struct {
+	Page	string	`json:"page"`
+	Content	string	`json:"content"`
+}
+
 type Vote struct {
 	Page	int	`json:"page"`
 	Vote_count	string	`json:"Vote_count"`
@@ -73,18 +78,29 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+
 	len := r.ContentLength
+
 	body := make([]byte, len)
 	r.Body.Read(body)
-	fmt.Fprintln(w, string(body))
 
-	var post Post
-	err := json.Unmarshal(body[:len], &post)
+	var new_post NewPost
+	err := json.Unmarshal(body[:len], &new_post)
 	if err != nil {
+		fmt.Println("bbbbbbbbbbbbbbbb")
 		w.WriteHeader(http.StatusInternalServerError)
     	return
 	}
-	fmt.Fprintln(w, post)
+	fmt.Fprintln(w, new_post.Content)
+
+	stmt, err := Db.Prepare("insert into posts(pages, content, likes) values(?, ?, ?)")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	stmt.Exec(new_post.Page, new_post.Content, 0)
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func Votes(w http.ResponseWriter, r *http.Request) {
